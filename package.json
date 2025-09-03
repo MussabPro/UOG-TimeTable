@@ -1,0 +1,24 @@
+{
+  "name": "uog-timetable",
+  "version": "1.0.0",
+  "description": "University of Gujrat Timetable Generator",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'No build step needed for static site'",
+    "start": "vercel dev"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MussabPro/UOG-TimeTable.git"
+  },
+  "keywords": [
+    "timetable",
+    "university",
+    "schedule",
+    "uog",
+    "generator"
+  ],
+  "author": "Mussab Omair <mussabomair16@gmail.com>",
+  "license": "MIT"
+}
