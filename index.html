@@ -238,9 +238,12 @@
         <textarea
           id="courseData"
           placeholder="Paste your course data here...
+LMS Format : Course Code	Section	Course Title	Cr. Hrs.	Instructor	Day	Time	Room
+CMS Format: Course Code	Course Description	Course Section	Lecture Day	Lecture Time	Room Code
+
 Example:
 CS-255	EB	Computer Organization and Assembly Language	3	Muhammad Jabbar	MON	13:30-15:00	B205
-CS-203	EB	Data Structures	4	Muhammad Tasaddaq Latif	MON	16:30-18:00	B013A"
+CS-203	Data Structures	EB	Mon	18:00-19:30	B013B"
         ></textarea>
         <button onclick="generateTimetable()">Generate Timetable</button>
       </div>
@@ -282,19 +285,85 @@ CS-203	EB	Data Structures	4	Muhammad Tasaddaq Latif	MON	16:30-18:00	B013A"
         const lines = courseData.split("\n").filter((line) => line.trim());
         const courses = [];
 
-        lines.forEach((line) => {
+        lines.forEach((line, index) => {
           const parts = line.split("\t");
+          console.log(`Line ${index}: `, parts); // Debug log
+
+          // Skip header rows (lines that contain common header keywords)
+          const headerKeywords = [
+            "Course Code",
+            "Course Description",
+            "Course Section",
+            "Section",
+            "Lecture Day",
+            "Lecture Time",
+            "Room Code",
+            "Room",
+            "Instructor",
+            "Cr. Hrs",
+          ];
+          const isHeaderRow = headerKeywords.some((keyword) =>
+            parts.some(
+              (part) =>
+                part &&
+                part.trim().toLowerCase().includes(keyword.toLowerCase())
+            )
+          );
+
+          if (isHeaderRow) {
+            console.log(`Skipping header row: `, parts); // Debug log
+            return; // Skip this line
+          }
+
+          // Handle different data formats
+          let courseData = {};
+
+          // Check format based on content and length
           if (parts.length >= 8) {
-            courses.push({
-              code: parts[0],
-              section: parts[1],
-              title: parts[2],
-              credits: parts[3],
-              instructor: parts[4],
-              day: parts[5],
-              time: parts[6],
-              room: parts[7],
-            });
+            // Old format: Course Code, Section, Course Title, Cr. Hrs., Instructor, Lecture Day, Lecture Time, Room
+            console.log("Using old format (8+ columns)");
+            courseData = {
+              code: parts[0] ? parts[0].trim() : "",
+              section: parts[1] ? parts[1].trim() : "",
+              title: parts[2] ? parts[2].trim() : "",
+              credits: parts[3] ? parts[3].trim() : "",
+              instructor: parts[4] || "",
+              day: parts[5] ? parts[5].trim() : "",
+              time: parts[6] ? parts[6].trim() : "",
+              room: parts[7] || "",
+            };
+          } else if (parts.length === 6) {
+            // New format: Course Code, Course Description, Course Section, Lecture Day, Lecture Time, Room Code
+            console.log("Using new format (6 columns)");
+            courseData = {
+              code: parts[0] ? parts[0].trim() : "",
+              title: parts[1] ? parts[1].trim() : "",
+              section: parts[2] ? parts[2].trim() : "",
+              day: parts[3] ? parts[3].trim() : "",
+              time: parts[4] ? parts[4].trim() : "",
+              room: parts[5] ? parts[5].trim() : "",
+              credits: "", // Not provided in new format
+              instructor: "", // Not provided in new format
+            };
+          }
+
+          console.log("Parsed course data:", courseData); // Debug log
+
+          // Only add courses that have required fields: code, title, section, day, and time
+          if (
+            courseData.code &&
+            courseData.title &&
+            courseData.section &&
+            courseData.day &&
+            courseData.time
+          ) {
+            console.log("Adding course:", courseData); // Debug log
+            courses.push(courseData);
+          } else {
+            console.log(
+              "Skipping course due to missing required fields:",
+              courseData
+            ); // Debug log
           }
         });
 
@@ -316,14 +385,22 @@ CS-203	EB	Data Structures	4	Muhammad Tasaddaq Latif	MON	16:30-18:00	B013A"
 
         // Populate timetable
         courses.forEach((course) => {
-          const day = course.day;
-          const time = course.time;
-          if (timetable[day] && timeSlots[time]) {
-            timetable[day][time] = course;
-          }
-        });
+          // Only process courses that have both day and time
+          if (course.day.trim() !== "" && course.time.trim() !== "") {
+            // Convert day format to uppercase and handle different formats
+            let day = course.day.toUpperCase();
+            if (day === "MONDAY") day = "MON";
+            if (day === "TUESDAY") day = "TUE";
+            if (day === "WEDNESDAY") day = "WED";
+            if (day === "THURSDAY") day = "THU";
+            if (day === "FRIDAY") day = "FRI";
 
-        // Generate table HTML
+            const time = course.time;
+            if (timetable[day] && timeSlots[time]) {
+              timetable[day][time] = course;
+            }
+          }
+        }); // Generate table HTML
         let tableHTML = `
           <thead>
             <tr>
@@ -358,10 +435,10 @@ CS-203	EB	Data Structures	4	Muhammad Tasaddaq Latif	MON	16:30-18:00	B013A"
 
               tableHTML += `
                 <td class="course-info">
-                  <div class="course-title">${course.title}</div>
-                  <div class="course-code">${course.code}</div>
-                  <div class="instructor">${course.instructor}</div>
-                  <div class="room">${room}</div>
+                  <div class="course-title">${course.title || ""}</div>
+                  <div class="course-code">${course.code || ""}</div>
+                  <div class="instructor">${course.instructor || ""}</div>
+                  <div class="room">${room || ""}</div>
                 </td>`;
             } else {
               tableHTML += `<td class="empty-cell"></td>`;
